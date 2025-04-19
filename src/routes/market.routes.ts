@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { marketController } from "../controllers/market.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
