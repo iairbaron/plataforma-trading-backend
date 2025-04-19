@@ -1,78 +1,57 @@
-import axios from 'axios';
+import axios from "axios";
+import { CoinData } from "../types/types";
 
-// Cache structure
-interface StockCache {
-  data: any;
-  timestamp: number;
-}
-
-// Cache for storing stock data
-const stockCache: Record<string, StockCache> = {};
-
-// Cache duration in milliseconds (15 minutes)
-const CACHE_DURATION = 15 * 60 * 1000;
-
-// List of 10 stock symbols to fetch
-const STOCK_SYMBOLS = [
-  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META',
-  'TSLA', 'NVDA', 'JPM', 'V', 'JNJ'
+// List of coin IDs to fetch
+const COIN_IDS = [
+  "bitcoin",
+  "ethereum",
+  "litecoin",
+  "solana",
+  "cardano",
+  "dogecoin",
+  "polkadot",
+  "avalanche-2",
+  "chainlink",
+  "uniswap",
 ];
 
-// Alpha Vantage API key
-const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-
 /**
- * Fetch stock data for the configured symbols with caching
+ * Fetch coin data from CoinGecko
  */
-export async function fetchStockData() {
-  const currentTime = Date.now();
-  const results = [];
+export async function fetchCoinData() {
+  console.log("COIN_IDS", COIN_IDS.join(","));
 
-  // Process each stock symbol
-  for (const symbol of STOCK_SYMBOLS) {
-    // Check if we have cached data and if it's still valid
-    if (
-      stockCache[symbol] &&
-      currentTime - stockCache[symbol].timestamp < CACHE_DURATION
-    ) {
-      // Use cached data
-      results.push(stockCache[symbol].data);
-    } else {
-      // Fetch new data
-      try {
-        const response = await axios.get(`https://www.alphavantage.co/query`, {
-          params: {
-            function: 'GLOBAL_QUOTE',
-            symbol,
-            apikey: API_KEY
-          }
-        });
-
-        if (response.data && response.data['Global Quote']) {
-          const quote = response.data['Global Quote'];
-          
-          const stockData = {
-            symbol,
-            name: symbol, // For simplicity, using symbol as name
-            price: parseFloat(quote['05. price']),
-            change: parseFloat(quote['09. change']),
-            changePercent: quote['10. change percent'].replace('%', ''),
-            lastUpdated: new Date().toISOString()
-          };
-
-          // Update cache
-          stockCache[symbol] = {
-            data: stockData,
-            timestamp: currentTime
-          };
-
-          results.push(stockData);
-        }
-      } catch (error) {
-        console.error(`Error fetching data for ${symbol}:`, error);
+  try {
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/simple/price`,
+      {
+        params: {
+          ids: COIN_IDS.join(","),
+          vs_currencies: "usd",
+          include_24hr_change: true,
+          include_last_updated_at: true,
+        },
+        headers: {
+          accept: "application/json",
+        },
       }
-    }
-  }
+    );
 
-  return results;
-} 
+    if (response.data) {
+      const results: CoinData[] = Object.entries(response.data).map(
+        ([key, value]: [string, any]) => ({
+          id: key,
+          price: value.usd,
+          change: value.usd_24h_change,
+          lastUpdated: value.last_updated_at,
+        })
+      );
+
+      console.log(results);
+      return results;
+    }
+  } catch (error) {
+    console.error("Error fetching coin data:", error);
+  }
+  return [];
+}

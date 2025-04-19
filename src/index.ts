@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import marketRoutes from "./routes/market.routes";
+import "./cron/cron";
 
 dotenv.config();
 
