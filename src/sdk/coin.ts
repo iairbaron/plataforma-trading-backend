@@ -2,7 +2,7 @@ import { fetchCoinData } from "../services/market.service";
 import { CoinData } from "../types/types";
 
 class Coin {
-  private static coins: CoinData[];
+  private static coins: CoinData[] = [];
   
   static async syncCoins() {
     console.log("Syncing coins");
@@ -11,11 +11,11 @@ class Coin {
     return this.coins;
   }
 
-  static async getCoins() {
+  static getCoins() {
     return this.coins;
   }
 
-  static async getCoin(id: string) {
+  static getCoin(id: string) {
     return this.coins.find((coin) => coin.id === id);
   }
   

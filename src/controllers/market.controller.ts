@@ -1,9 +1,9 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import Coin from "../sdk/coin";
 /**
  * Get instruments with current price and daily variation
  */
-export const getInstrumentsController = async (res: Response) => {
+export const getInstrumentsController = async (req: Request, res: Response) => {
   try {
     const coins = Coin.getCoins();
     res.status(200).json({ coins });
