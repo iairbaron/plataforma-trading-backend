@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes";
+import favoritesRoutes from "./routes/favorites.routes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import marketRoutes from "./routes/market.routes";
@@ -16,7 +17,7 @@ const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
       ? process.env.FRONTEND_URL || "https://your-frontend-domain.vercel.app"
-      : "http://localhost:5173",
+      : ["http://localhost:5173", "http://localhost:5174"],
   credentials: true,
 };
 
@@ -33,6 +34,7 @@ app.use(express.json());
 // Routes
 app.use("/trading/auth", authRoutes);
 app.use("/api/market", marketRoutes);
+app.use("/api/favorites", favoritesRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server running ✅");

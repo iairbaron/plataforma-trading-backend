@@ -1,29 +1,59 @@
+# Plataforma Trading Backend
+
+API para la plataforma de trading que proporciona endpoints para autenticación, datos de mercado y gestión de favoritos.
+
+## Configuración
+
+Asegúrate de tener un archivo `.env` con las siguientes variables:
+
+```plaintext
+DATABASE_URL="postgresql://tu_usuario:tu_contraseña@localhost:5432/tu_base_de_datos"
+PORT=3000
+JWT_SECRET="tu_clave_secreta"
+COINGECKO_API_KEY="tu_api_key_coingecko"
+```
+
 ## Endpoints
 
 ### Autenticación
 
-- **Login:** `/api/auth/login`
-- **Signup:** `/api/auth/signup`
+#### Login
+- **URL:** `/trading/auth/login`
+- **Método:** `POST`
+- **Body:**
+  ```json
+  {
+    "email": "usuario@ejemplo.com",
+    "password": "contraseña123"
+  }
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "message": "Login successful",
+    "data": {
+      "token": "jwt_token_here",
+      "user": {
+        "id": "user_id",
+        "name": "Nombre Usuario",
+        "email": "usuario@ejemplo.com",
+        "role": "user"
+      }
+    }
+  }
+  ```
 
-### Instruments
+### Instrumentos (Criptomonedas)
 
-**URL:** `/api/market/instruments`
-
-**Método:** `GET`
-
-**Descripción:** Devuelve una lista de criptomonedas con sus precios actuales y variaciones diarias.
-
-**Autenticación:** Requiere un token JWT en el header de autorización.
-
-**Header de Autorización:**
-```plaintext
-Authorization: Bearer <tu_token_jwt>
-```
-
-**Respuesta Exitosa:**
-
-- **Código:** `200 OK`
-- **Cuerpo:**
+#### Obtener Lista de Instrumentos
+- **URL:** `/api/market/instruments`
+- **Método:** `GET`
+- **Headers:** 
+  ```
+  Authorization: Bearer <token_jwt>
+  ```
+- **Respuesta Exitosa:**
   ```json
   {
     "coins": [
@@ -37,30 +67,90 @@ Authorization: Bearer <tu_token_jwt>
         "volume24h": 11975620754,
         "change24h": -1.0139,
         "change7d": 0.3828
-      },
-      {
-        "id": "ethereum",
-        "name": "Ethereum",
-        "symbol": "eth",
-        "price": 1573.53,
-        "high24h": 1620.2,
-        "low24h": 1570.08,
-        "volume24h": 6687848117,
-        "change24h": -2.0226,
-        "change7d": -0.6744
       }
-      // ... más monedas
     ]
   }
   ```
 
-**Notas:**
-- `id`: Identificador de la criptomoneda
-- `name`: Nombre de la criptomoneda
-- `symbol`: Símbolo de la criptomoneda
-- `price`: Precio actual en USD
-- `high24h`: Precio más alto en las últimas 24 horas
-- `low24h`: Precio más bajo en las últimas 24 horas
-- `volume24h`: Volumen de transacciones en las últimas 24 horas
-- `change24h`: Variación porcentual en las últimas 24 horas
-- `change7d`: Variación porcentual en los últimos 7 días
+### Favoritos
+
+#### Agregar Favorito
+- **URL:** `/api/favorites`
+- **Método:** `POST`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  Content-Type: application/json
+  ```
+- **Body:**
+  ```json
+  {
+    "symbol": "btc"
+  }
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "id": "uuid",
+      "symbol": "btc",
+      "userId": "user_id",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  }
+  ```
+
+#### Obtener Favoritos
+- **URL:** `/api/favorites`
+- **Método:** `GET`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "data": [
+      {
+        "id": "uuid",
+        "symbol": "btc",
+        "userId": "user_id",
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+  ```
+
+#### Eliminar Favorito
+- **URL:** `/api/favorites/:symbol`
+- **Método:** `DELETE`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "message": "Favorite removed successfully"
+  }
+  ```
+
+## Ejecución
+
+Para iniciar el servidor:
+
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar en modo desarrollo
+npm run dev
+```
+
+## Notas
+- Todos los endpoints (excepto login) requieren autenticación mediante token JWT
+- El token JWT debe enviarse en el header `Authorization` como `Bearer <token>`
+- Los precios de las criptomonedas se actualizan cada 5 minutos
