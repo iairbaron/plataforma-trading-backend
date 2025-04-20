@@ -5,9 +5,11 @@ class Coin {
   private static coins: CoinData[] = [];
   
   static async syncCoins() {
-    console.log("Syncing coins");
     const coins = await fetchCoinData();
     this.coins = coins;
+
+    console.log("Syncing coins", coins);
+
     return this.coins;
   }
 

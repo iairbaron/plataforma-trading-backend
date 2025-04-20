@@ -19,33 +19,32 @@ const COIN_IDS = [
  * Fetch coin data from CoinGecko
  */
 export async function fetchCoinData() {
-  console.log("COIN_IDS", COIN_IDS.join(","));
-
   try {
     const response = await axios.get(
-      `https://api.coingecko.com/api/v3/simple/price`,
+      "https://api.coingecko.com/api/v3/coins/markets",
       {
         params: {
+          vs_currency: "usd",
           ids: COIN_IDS.join(","),
-          vs_currencies: "usd",
-          include_24hr_change: true,
-          include_last_updated_at: true,
+          price_change_percentage: "24h,7d",
         },
         headers: {
           accept: "application/json",
         },
       }
     );
-
     if (response.data) {
-      const results: CoinData[] = Object.entries(response.data).map(
-        ([key, value]: [string, any]) => ({
-          id: key,
-          price: value.usd,
-          change: value.usd_24h_change,
-          lastUpdated: value.last_updated_at,
-        })
-      );
+      const results: CoinData[] = response.data.map((coin: any) => ({
+        id: coin.id,
+        name: coin.name,
+        symbol: coin.symbol,
+        price: coin.current_price,
+        high24h: coin.high_24h,
+        low24h: coin.low_24h,
+        volume24h: coin.total_volume,
+        change24h: coin.price_change_percentage_24h_in_currency,
+        change7d: coin.price_change_percentage_7d_in_currency,
+      }));
 
       console.log(results);
       return results;
