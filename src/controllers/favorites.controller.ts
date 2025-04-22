@@ -6,12 +6,12 @@ const prisma = new PrismaClient();
 export const addFavorite = async (req: Request, res: Response) => {
   try {
     const { symbol } = req.body;
-    const userId = req.user.id; // from auth middleware
+    const userId = req.user?.id; // from auth middleware
 
     const favorite = await prisma.favorite.create({
       data: {
         symbol,
-        userId
+        userId: userId as string
       }
     });
 
@@ -31,7 +31,7 @@ export const addFavorite = async (req: Request, res: Response) => {
 export const removeFavorite = async (req: Request, res: Response) => {
   try {
     const { symbol } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     await prisma.favorite.deleteMany({
       where: {
@@ -55,7 +55,7 @@ export const removeFavorite = async (req: Request, res: Response) => {
 
 export const getFavorites = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     const favorites = await prisma.favorite.findMany({
       where: {

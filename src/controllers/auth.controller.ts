@@ -40,6 +40,11 @@ export const signup = async (req: Request, res: Response) => {
       },
     });
 
+    // Create wallet for the new user with default balance 0
+    await prisma.wallet.create({
+      data: { userId: user.id, balance: 0 },
+    });
+
     // Generate JWT
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
