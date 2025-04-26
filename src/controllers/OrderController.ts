@@ -18,9 +18,9 @@ export const createMarketOrder = async (
       if (!wallet) throw new Error("Wallet no encontrada");
 
       if (type === "buy") {
-        // if (wallet.balance < total) {
-        //   throw new Error("Fondos insuficientes");
-        // }
+        if (wallet.balance < total) {
+          throw new Error("Fondos insuficientes");
+        }
 
         await tx.wallet.update({
           where: { userId: userId as string },

@@ -17,8 +17,12 @@ class Coin {
     return this.coins;
   }
 
-  static getCoin(id: string) {
-    return this.coins.find((coin) => coin.id === id);
+  static getCoin(identifier: string) {
+    const key = identifier.toLowerCase();
+    return this.coins.find(
+      (coin) =>
+        coin.id.toLowerCase() === key || coin.symbol.toLowerCase() === key
+    );
   }
   
 }

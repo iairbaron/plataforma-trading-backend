@@ -7,12 +7,6 @@ export const validateMarketOrder = (
   next: NextFunction
 ): void => {
   const { symbol, amount, type } = req.body;
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ error: "Usuario no autenticado" });
-    return;
-  }
 
   if (!symbol || !amount || !type) {
     res.status(400).json({ error: "Faltan datos obligatorios" });

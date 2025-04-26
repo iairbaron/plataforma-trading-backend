@@ -138,6 +138,94 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
   }
   ```
 
+## Órdenes
+
+### Crear Orden de Mercado (Comprar/Vender)
+- **URL:** `/api/orders`
+- **Método:** `POST`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  Content-Type: application/json
+  ```
+- **Body:**
+  ```json
+  {
+    "symbol": "eth",
+    "amount": 0.5,
+    "type": "buy",
+    "priceAtExecution": 1806.21,
+    "total": 903.105
+  }
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "id": "order_id",
+      "userId": "user_id",
+      "symbol": "eth",
+      "type": "buy",
+      "amount": 0.5,
+      "priceAtExecution": 1806.21,
+      "createdAt": "2025-04-26T19:00:29.975Z"
+    }
+  }
+  ```
+
+### Obtener Órdenes
+- **URL:** `/api/orders`
+- **Método:** `GET`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "data": [
+      {
+        "id": "order_id",
+        "userId": "user_id",
+        "symbol": "eth",
+        "type": "buy",
+        "amount": 0.5,
+        "priceAtExecution": 1806.21,
+        "createdAt": "2025-04-26T19:00:29.975Z"
+      }
+    ]
+  }
+  ```
+
+## Wallet
+
+### Obtener Balance
+- **URL:** `/api/wallet/balance`
+- **Método:** `GET`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "usdBalance": 1000.0,
+      "totalCoinValue": 1500.0,
+      "coinDetails": {
+        "eth": {
+          "amount": 0.5,
+          "value": 903.105,
+          "currentPrice": 1806.21
+        }
+      }
+    }
+  }
+  ```
+
 ## Ejecución
 
 Para iniciar el servidor:

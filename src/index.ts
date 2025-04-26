@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import favoritesRoutes from "./routes/favorites.routes";
 import orderRoutes from "./routes/orders";
+import walletRoutes from "./routes/wallet.routes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import marketRoutes from "./routes/market.routes";
@@ -37,6 +38,7 @@ app.use("/trading/auth", authRoutes);
 app.use("/api/market", marketRoutes);
 app.use("/api/favorites", favoritesRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/wallet", walletRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server running ✅");
