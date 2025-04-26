@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import Coin from "../sdk/coin";
+
 const prisma = new PrismaClient();
 
 export const createMarketOrder = async (
@@ -18,10 +20,6 @@ export const createMarketOrder = async (
       if (!wallet) throw new Error("Wallet no encontrada");
 
       if (type === "buy") {
-        if (wallet.balance < total) {
-          throw new Error("Fondos insuficientes");
-        }
-
         await tx.wallet.update({
           where: { userId: userId as string },
           data: { balance: { decrement: total } },
@@ -29,6 +27,7 @@ export const createMarketOrder = async (
       }
 
       if (type === "sell") {
+        // La validación de cantidad suficiente ahora está en el middleware
         await tx.wallet.update({
           where: { userId: userId as string },
           data: { balance: { increment: total } },
@@ -55,20 +54,18 @@ export const createMarketOrder = async (
   }
 };
 
-export const getOrders = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getOrders = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id as string;
     const orders = await prisma.order.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
-    res.json({ status: 'success', data: orders });
+    res.json({ status: "success", data: orders });
   } catch (error: unknown) {
-    console.error('Error fetching orders:', error);
-    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error("Error fetching orders:", error);
+    const message =
+      error instanceof Error ? error.message : "Error desconocido";
     res.status(400).json({ error: message });
   }
 };

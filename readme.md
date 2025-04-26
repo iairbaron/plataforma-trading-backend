@@ -158,6 +158,9 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
     "total": 903.105
   }
   ```
+- **Validaciones:**
+  - Para órdenes de **compra** (`type: "buy"`): Verifica que el usuario tenga suficiente balance en su wallet para cubrir el total.
+  - Para órdenes de **venta** (`type: "sell"`): Verifica que el usuario tenga suficiente cantidad de la moneda para vender, basado en su historial de órdenes.
 - **Respuesta Exitosa:**
   ```json
   {
@@ -171,6 +174,17 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
       "priceAtExecution": 1806.21,
       "createdAt": "2025-04-26T19:00:29.975Z"
     }
+  }
+  ```
+- **Respuesta Error:**
+  ```json
+  {
+    "error": "Fondos insuficientes" // Para compra
+  }
+  ```
+  ```json
+  {
+    "error": "No tienes suficiente ETH para vender" // Para venta
   }
   ```
 
