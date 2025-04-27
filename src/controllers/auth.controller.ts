@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 
 // Helper function for error responses
 const createErrorResponse = (code: string, message: string, field?: string) => ({

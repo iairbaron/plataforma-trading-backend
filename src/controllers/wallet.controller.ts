@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from '../prisma';
 import Coin from "../sdk/coin";
-
-const prisma = new PrismaClient();
 
 export const depositFunds = async (
   req: Request,
