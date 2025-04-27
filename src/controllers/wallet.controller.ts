@@ -2,6 +2,16 @@ import { Request, Response } from "express";
 import prisma from '../prisma';
 import Coin from "../sdk/coin";
 import { createErrorResponse } from '../utils/errorResponse';
+import { validarAmount, getWalletOrError } from '../utils/walletHelpers';
+import { formatNumber } from '../utils/numberFormat';
+
+// Helper para actualizar el balance
+async function actualizarBalance(userId: string, amount: number, tipo: "increment" | "decrement") {
+  return prisma.wallet.update({
+    where: { userId },
+    data: { balance: { [tipo]: amount } },
+  });
+}
 
 export const depositFunds = async (
   req: Request,
@@ -11,24 +21,18 @@ export const depositFunds = async (
     const { amount } = req.body;
     const userId = req.user?.id as string;
 
-    if (amount <= 0) {
-      res.status(400).json(createErrorResponse('INVALID_AMOUNT', "La cantidad debe ser mayor que cero"));
-      return;
-    }
+    if (!validarAmount(amount, res)) return;
 
-    const wallet = await prisma.wallet.findUnique({ where: { userId } });
+    const wallet = await getWalletOrError(userId, res);
+    if (!wallet) return;
 
-    if (!wallet) {
-      res.status(404).json(createErrorResponse('WALLET_NOT_FOUND', "Wallet no encontrada"));
-      return;
-    }
-
-    const updatedWallet = await prisma.wallet.update({
-      where: { userId },
-      data: { balance: { increment: amount } },
-    });
-
-    res.status(200).json({ status: "success", data: updatedWallet });
+    const updatedWallet = await actualizarBalance(userId, amount, "increment");
+    // Formatear balance
+    const formattedWallet = {
+      ...updatedWallet,
+      balance: formatNumber(updatedWallet.balance, 2),
+    };
+    res.status(200).json({ status: "success", data: formattedWallet });
   } catch (error) {
     console.error("Error depositando fondos:", error);
     res.status(500).json(createErrorResponse('DEPOSIT_ERROR', "Error al depositar fondos"));
@@ -58,7 +62,7 @@ export const getBalance = async (
     const coins = Coin.getCoins();
     const coinDetails: Record<
       string,
-      { amount: number; value: number; currentPrice: number }
+      { amount: string; value: string; currentPrice: string }
     > = orders.reduce((acc, order) => {
       const coin = coins.find(
         (c) => c.symbol.toLowerCase() === order.symbol.toLowerCase()
@@ -66,24 +70,25 @@ export const getBalance = async (
       if (coin) {
         const value = order.amount * coin.price;
         if (!acc[order.symbol]) {
-          acc[order.symbol] = { amount: 0, value: 0, currentPrice: coin.price };
+          acc[order.symbol] = { amount: formatNumber(0, 8), value: formatNumber(0, 2), currentPrice: formatNumber(coin.price, 2) };
         }
-        acc[order.symbol].amount += order.amount;
-        acc[order.symbol].value += value;
+        acc[order.symbol].amount = formatNumber(parseFloat(acc[order.symbol].amount) + order.amount, 8);
+        acc[order.symbol].value = formatNumber(parseFloat(acc[order.symbol].value) + value, 2);
+        acc[order.symbol].currentPrice = formatNumber(coin.price, 2);
       }
       return acc;
-    }, {} as Record<string, { amount: number; value: number; currentPrice: number }>);
+    }, {} as Record<string, { amount: string; value: string; currentPrice: string }>);
 
     const totalCoinValue = Object.values(coinDetails).reduce(
-      (sum, coin) => sum + coin.value,
+      (sum, coin) => sum + parseFloat(coin.value),
       0
     );
 
     res.status(200).json({
       status: "success",
       data: {
-        usdBalance: wallet.balance,
-        totalCoinValue,
+        usdBalance: formatNumber(wallet.balance, 2),
+        totalCoinValue: formatNumber(totalCoinValue, 2),
         coinDetails,
       },
     });
@@ -106,46 +111,36 @@ export const updateBalance = async (
       return;
     }
 
-    if (amount <= 0) {
-      res.status(400).json(createErrorResponse('INVALID_AMOUNT', "La cantidad debe ser mayor que cero"));
-      return;
-    }
+    if (!validarAmount(amount, res)) return;
 
     if (operation === "deposit") {
-      const wallet = await prisma.wallet.findUnique({ where: { userId } });
+      const wallet = await getWalletOrError(userId, res);
+      if (!wallet) return;
 
-      if (!wallet) {
-        res.status(404).json(createErrorResponse('WALLET_NOT_FOUND', "Wallet no encontrada"));
-        return;
-      }
-
-      const updatedWallet = await prisma.wallet.update({
-        where: { userId },
-        data: { balance: { increment: amount } },
-      });
-
-      res.status(200).json({ status: "success", data: updatedWallet });
+      const updatedWallet = await actualizarBalance(userId, amount, "increment");
+      const formattedWallet = {
+        ...updatedWallet,
+        balance: formatNumber(updatedWallet.balance, 2),
+      };
+      res.status(200).json({ status: "success", data: formattedWallet });
     } else {
       // withdraw
       try {
         const result = await prisma.$transaction(async (tx) => {
           const wallet = await tx.wallet.findUnique({ where: { userId } });
-
-          if (!wallet) {
-            throw new Error("Wallet no encontrada");
-          }
-
-          if (wallet.balance < amount) {
-            throw new Error("Fondos insuficientes");
-          }
+          if (!wallet) throw new Error("Wallet no encontrada");
+          if (wallet.balance < amount) throw new Error("Fondos insuficientes");
 
           return tx.wallet.update({
             where: { userId },
             data: { balance: { decrement: amount } },
           });
         });
-
-        res.status(200).json({ status: "success", data: result });
+        const formattedResult = {
+          ...result,
+          balance: formatNumber(result.balance, 2),
+        };
+        res.status(200).json({ status: "success", data: formattedResult });
       } catch (transactionError: unknown) {
         const message =
           transactionError instanceof Error

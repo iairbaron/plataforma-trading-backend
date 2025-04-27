@@ -1,14 +1,7 @@
 import prisma from "../prisma";
 import { Request, Response } from "express";
 import { createErrorResponse } from "../utils/errorResponse";
-
-function formatNumber(num: number, decimals = 8) {
-  return Number(num).toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-    useGrouping: false,
-  });
-}
+import { formatNumber } from "../utils/numberFormat";
 
 export const createMarketOrder = async (
   req: Request,

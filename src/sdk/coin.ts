@@ -8,8 +8,6 @@ class Coin {
     const coins = await fetchCoinData();
     this.coins = coins;
 
-    console.log("Syncing coins", coins);
-
     return this.coins;
   }
 

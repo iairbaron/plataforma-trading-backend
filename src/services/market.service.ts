@@ -46,7 +46,6 @@ export async function fetchCoinData() {
         change7d: coin.price_change_percentage_7d_in_currency,
       }));
 
-      console.log(results);
       return results;
     }
   } catch (error) {

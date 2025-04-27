@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import Coin from "../sdk/coin";
 import { PrismaClient } from "@prisma/client";
 import { createErrorResponse } from '../utils/errorResponse';
-
-const prisma = new PrismaClient();
+import { validarAmount, getWalletOrError, hasFunds, hasAssets } from '../utils/walletHelpers';
 
 export const validateMarketOrder = async (
   req: Request,
@@ -21,8 +20,8 @@ export const validateMarketOrder = async (
       return;
     }
 
-    if (typeof symbol !== "string" || typeof amount !== "number" || amount <= 0) {
-      res.status(400).json(createErrorResponse('ORDER_VALIDATION_INVALID_DATA', 'Datos inválidos'));
+    if (typeof symbol !== "string" || typeof amount !== "number" || !validarAmount(amount, res)) {
+      // validarAmount ya responde si amount <= 0
       return;
     }
 
@@ -41,52 +40,18 @@ export const validateMarketOrder = async (
     req.body.priceAtExecution = coin.price;
     req.body.total = amount * coin.price;
     
-    const userId = req.user?.id;
+    const userId = req.user?.id as string;
 
     // Validación para órdenes de compra
     if (type === "buy") {
-      const wallet = await prisma.wallet.findUnique({
-        where: { userId: userId as string },
-      });
-
-      if (!wallet) {
-        res.status(404).json(createErrorResponse('ORDER_VALIDATION_WALLET_NOT_FOUND', 'Wallet no encontrada'));
-        return;
-      }
-
-      if (wallet.balance < req.body.total) {
-        res.status(400).json(createErrorResponse('ORDER_VALIDATION_INSUFFICIENT_FUNDS', `Fondos insuficientes. Balance disponible: ${wallet.balance}, Necesario: ${req.body.total}`));
-        return;
-      }
+      const wallet = await getWalletOrError(userId, res);
+      if (!wallet) return;
+      if (!hasFunds(wallet, req.body.total, res)) return;
     }
 
     // Validación para órdenes de venta
     if (type === "sell") {
-      const userOrders = await prisma.order.findMany({
-        where: { 
-          userId: userId as string,
-          symbol: symbol 
-        },
-      });
-      
-      // Calcular cuánto de esta moneda tiene el usuario
-      let totalBought = 0;
-      let totalSold = 0;
-      
-      for (const order of userOrders) {
-        if (order.type === "buy") {
-          totalBought += order.amount;
-        } else if (order.type === "sell") {
-          totalSold += order.amount;
-        }
-      }
-      
-      const availableAmount = totalBought - totalSold;
-      
-      if (availableAmount < amount) {
-        res.status(400).json(createErrorResponse('ORDER_VALIDATION_INSUFFICIENT_ASSETS', `No tienes suficiente ${symbol.toUpperCase()} para vender. Disponible: ${availableAmount}`));
-        return;
-      }
+      if (!(await hasAssets(userId, symbol, amount, res))) return;
     }
 
     next();
