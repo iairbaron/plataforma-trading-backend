@@ -18,6 +18,17 @@ const passwordValidationRules = [
     .withMessage('Password must contain at least one uppercase letter')
 ];
 
+// Shared email validation rules
+const emailValidationRules = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .bail()
+    .isEmail()
+    .withMessage('Must be a valid email')
+];
+
 // Helper function to format validation errors
 const formatValidationErrors = (errors: any[]) => {
   return {
@@ -30,6 +41,15 @@ const formatValidationErrors = (errors: any[]) => {
   };
 };
 
+// Middleware to check validation results
+const checkValidation = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(formatValidationErrors(errors.array()));
+  }
+  next();
+};
+
 export const validateSignup = [
   // Name validation
   body('name')
@@ -40,37 +60,19 @@ export const validateSignup = [
     .isLength({ min: 2 })
     .withMessage('Name must be at least 2 characters long'),
 
-  // Email validation
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .bail()
-    .isEmail()
-    .withMessage('Must be a valid email'),
+  // Email validation (reutilizado)
+  ...emailValidationRules,
 
   // Password validation (using shared rules)
   ...passwordValidationRules,
 
-  // Middleware to check validation results
-  (req: Request, res: Response, next: NextFunction) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(formatValidationErrors(errors.array()));
-    }
-    next();
-  }
+  // Middleware to check validation results (reutilizado)
+  checkValidation
 ];
 
 export const validateLogin = [
-  // Email validation
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .bail()
-    .isEmail()
-    .withMessage('Must be a valid email'),
+  // Email validation (reutilizado)
+  ...emailValidationRules,
 
   // Password validation (basic for login)
   body('password')
@@ -78,12 +80,6 @@ export const validateLogin = [
     .notEmpty()
     .withMessage('Password is required'),
 
-  // Middleware to check validation results
-  (req: Request, res: Response, next: NextFunction) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(formatValidationErrors(errors.array()));
-    }
-    next();
-  }
+  // Middleware to check validation results (reutilizado)
+  checkValidation
 ]; 

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { findUserByEmail } from '../services/user.service';
 
 // Helper function for error responses
 const createErrorResponse = (code: string, message: string, field?: string) => ({
@@ -15,9 +16,7 @@ export const signup = async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
+    const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
       return res.status(400).json(
@@ -76,9 +75,7 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
+    const user = await findUserByEmail(email);
 
     // If user doesn't exist or password is wrong
     if (!user) {
