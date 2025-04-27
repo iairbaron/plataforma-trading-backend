@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import Coin from "../sdk/coin";
 import { PrismaClient } from "@prisma/client";
+import { createErrorResponse } from '../utils/errorResponse';
 
 const prisma = new PrismaClient();
 
@@ -14,23 +15,23 @@ export const validateMarketOrder = async (
 
     // Validaciones básicas
     if (!symbol || !amount || !type) {
-      res.status(400).json({ error: "Faltan datos obligatorios" });
+      res.status(400).json(createErrorResponse('ORDER_VALIDATION_MISSING_FIELDS', 'Faltan datos obligatorios'));
       return;
     }
 
     if (typeof symbol !== "string" || typeof amount !== "number" || amount <= 0) {
-      res.status(400).json({ error: "Datos inválidos" });
+      res.status(400).json(createErrorResponse('ORDER_VALIDATION_INVALID_DATA', 'Datos inválidos'));
       return;
     }
 
     if (!["buy", "sell"].includes(type)) {
-      res.status(400).json({ error: "Tipo de orden inválido" });
+      res.status(400).json(createErrorResponse('ORDER_VALIDATION_INVALID_TYPE', 'Tipo de orden inválido'));
       return;
     }
 
     const coin = Coin.getCoin(symbol);
     if (!coin) {
-      res.status(404).json({ error: "Moneda no encontrada" });
+      res.status(404).json(createErrorResponse('ORDER_VALIDATION_COIN_NOT_FOUND', 'Moneda no encontrada'));
       return;
     }
 
@@ -47,14 +48,12 @@ export const validateMarketOrder = async (
       });
 
       if (!wallet) {
-        res.status(404).json({ error: "Wallet no encontrada" });
+        res.status(404).json(createErrorResponse('ORDER_VALIDATION_WALLET_NOT_FOUND', 'Wallet no encontrada'));
         return;
       }
 
       if (wallet.balance < req.body.total) {
-        res.status(400).json({ 
-          error: `Fondos insuficientes. Balance disponible: ${wallet.balance}, Necesario: ${req.body.total}` 
-        });
+        res.status(400).json(createErrorResponse('ORDER_VALIDATION_INSUFFICIENT_FUNDS', `Fondos insuficientes. Balance disponible: ${wallet.balance}, Necesario: ${req.body.total}`));
         return;
       }
     }
@@ -83,9 +82,7 @@ export const validateMarketOrder = async (
       const availableAmount = totalBought - totalSold;
       
       if (availableAmount < amount) {
-        res.status(400).json({ 
-          error: `No tienes suficiente ${symbol.toUpperCase()} para vender. Disponible: ${availableAmount}` 
-        });
+        res.status(400).json(createErrorResponse('ORDER_VALIDATION_INSUFFICIENT_ASSETS', `No tienes suficiente ${symbol.toUpperCase()} para vender. Disponible: ${availableAmount}`));
         return;
       }
     }
@@ -93,6 +90,6 @@ export const validateMarketOrder = async (
     next();
   } catch (error) {
     console.error("Error validando orden:", error);
-    res.status(500).json({ error: "Error al validar la orden" });
+    res.status(500).json(createErrorResponse('ORDER_VALIDATION_ERROR', 'Error al validar la orden'));
   }
 };

@@ -1,64 +1,57 @@
-import { Request, Response, NextFunction } from 'express';
-import { body, validationResult } from 'express-validator';
+import { Request, Response, NextFunction } from "express";
+import { body, validationResult } from "express-validator";
+import { createErrorResponse } from "../utils/errorResponse";
 
 // Shared password validation rules
 const passwordValidationRules = [
-  body('password')
+  body("password")
     .trim()
     .notEmpty()
-    .withMessage('Password is required')
+    .withMessage("Password is required")
     .bail()
     .isLength({ min: 5 })
-    .withMessage('Password must be at least 5 characters long')
+    .withMessage("Password must be at least 5 characters long")
     .bail()
     .matches(/\d/)
-    .withMessage('Password must contain at least one number')
+    .withMessage("Password must contain at least one number")
     .bail()
     .matches(/[A-Z]/)
-    .withMessage('Password must contain at least one uppercase letter')
+    .withMessage("Password must contain at least one uppercase letter"),
 ];
 
 // Shared email validation rules
 const emailValidationRules = [
-  body('email')
+  body("email")
     .trim()
     .notEmpty()
-    .withMessage('Email is required')
+    .withMessage("Email is required")
     .bail()
     .isEmail()
-    .withMessage('Must be a valid email')
+    .withMessage("Must be a valid email"),
 ];
-
-// Helper function to format validation errors
-const formatValidationErrors = (errors: any[]) => {
-  return {
-    status: 'error',
-    code: 'VALIDATION_ERROR',
-    errors: errors.map(err => ({
-      field: err.path,
-      message: err.msg
-    }))
-  };
-};
 
 // Middleware to check validation results
 const checkValidation = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json(formatValidationErrors(errors.array()));
+    return res
+      .status(400)
+      .json(
+        createErrorResponse("VALIDATION_ERROR", "Validation error", undefined)
+      );
   }
   next();
 };
 
 export const validateSignup = [
   // Name validation
-  body('name')
+  body("name")
     .trim()
     .notEmpty()
-    .withMessage('Name is required')
+    .withMessage("Name is required")
     .bail()
     .isLength({ min: 2 })
-    .withMessage('Name must be at least 2 characters long'),
+    .withMessage("Name must be at least 2 characters long"),
 
   // Email validation (reutilizado)
   ...emailValidationRules,
@@ -67,7 +60,7 @@ export const validateSignup = [
   ...passwordValidationRules,
 
   // Middleware to check validation results (reutilizado)
-  checkValidation
+  checkValidation,
 ];
 
 export const validateLogin = [
@@ -75,11 +68,8 @@ export const validateLogin = [
   ...emailValidationRules,
 
   // Password validation (basic for login)
-  body('password')
-    .trim()
-    .notEmpty()
-    .withMessage('Password is required'),
+  body("password").trim().notEmpty().withMessage("Password is required"),
 
   // Middleware to check validation results (reutilizado)
-  checkValidation
-]; 
+  checkValidation,
+];

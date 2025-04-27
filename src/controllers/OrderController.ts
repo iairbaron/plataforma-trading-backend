@@ -1,5 +1,14 @@
 import prisma from '../prisma';
 import { Request, Response } from "express";
+import { createErrorResponse } from '../utils/errorResponse';
+
+function formatNumber(num: number, decimals = 8) {
+  return Number(num).toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+    useGrouping: false
+  });
+}
 
 export const createMarketOrder = async (
   req: Request,
@@ -14,7 +23,7 @@ export const createMarketOrder = async (
         where: { userId: userId as string },
       });
 
-      if (!wallet) throw new Error("Wallet no encontrada");
+      if (!wallet) throw new Error("WALLET_NOT_FOUND");
 
       if (type === "buy") {
         await tx.wallet.update({
@@ -24,7 +33,6 @@ export const createMarketOrder = async (
       }
 
       if (type === "sell") {
-        // La validación de cantidad suficiente ahora está en el middleware
         await tx.wallet.update({
           where: { userId: userId as string },
           data: { balance: { increment: total } },
@@ -42,12 +50,29 @@ export const createMarketOrder = async (
       });
     });
 
-    res.status(201).json({ status: "success", data: order });
+    const formattedOrder = {
+      ...order,
+      amount: formatNumber(order.amount),
+      priceAtExecution: formatNumber(order.priceAtExecution),
+    };
+
+    res.status(201).json({ status: "success", data: formattedOrder });
   } catch (error: unknown) {
     console.error("Error creando orden:", error);
-    const message =
-      error instanceof Error ? error.message : "Error desconocido";
-    res.status(400).json({ error: message });
+    let code = "ORDER_ERROR";
+    let message = "Error desconocido";
+    if (error instanceof Error) {
+      if (error.message === "WALLET_NOT_FOUND") {
+        code = "WALLET_NOT_FOUND";
+        message = "Wallet no encontrada";
+      } else if (error.message === "Fondos insuficientes") {
+        code = "INSUFFICIENT_FUNDS";
+        message = "Fondos insuficientes";
+      } else {
+        message = error.message;
+      }
+    }
+    res.status(400).json(createErrorResponse(code, message));
   }
 };
 
@@ -58,11 +83,14 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
-    res.json({ status: "success", data: orders });
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      amount: formatNumber(order.amount),
+      priceAtExecution: formatNumber(order.priceAtExecution),
+    }));
+    res.json({ status: "success", data: formattedOrders });
   } catch (error: unknown) {
     console.error("Error fetching orders:", error);
-    const message =
-      error instanceof Error ? error.message : "Error desconocido";
-    res.status(400).json({ error: message });
+    res.status(400).json(createErrorResponse("ORDER_FETCH_ERROR", error instanceof Error ? error.message : "Error desconocido"));
   }
 };

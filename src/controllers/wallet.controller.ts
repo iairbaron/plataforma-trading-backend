@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from '../prisma';
 import Coin from "../sdk/coin";
+import { createErrorResponse } from '../utils/errorResponse';
 
 export const depositFunds = async (
   req: Request,
@@ -11,14 +12,14 @@ export const depositFunds = async (
     const userId = req.user?.id as string;
 
     if (amount <= 0) {
-      res.status(400).json({ error: "La cantidad debe ser mayor que cero" });
+      res.status(400).json(createErrorResponse('INVALID_AMOUNT', "La cantidad debe ser mayor que cero"));
       return;
     }
 
     const wallet = await prisma.wallet.findUnique({ where: { userId } });
 
     if (!wallet) {
-      res.status(404).json({ error: "Wallet no encontrada" });
+      res.status(404).json(createErrorResponse('WALLET_NOT_FOUND', "Wallet no encontrada"));
       return;
     }
 
@@ -30,7 +31,7 @@ export const depositFunds = async (
     res.status(200).json({ status: "success", data: updatedWallet });
   } catch (error) {
     console.error("Error depositando fondos:", error);
-    res.status(500).json({ error: "Error al depositar fondos" });
+    res.status(500).json(createErrorResponse('DEPOSIT_ERROR', "Error al depositar fondos"));
   }
 };
 
@@ -44,7 +45,7 @@ export const getBalance = async (
     // Obtener saldo en USD
     const wallet = await prisma.wallet.findUnique({ where: { userId } });
     if (!wallet) {
-      res.status(404).json({ error: "Wallet no encontrada" });
+      res.status(404).json(createErrorResponse('WALLET_NOT_FOUND', "Wallet no encontrada"));
       return;
     }
 
@@ -88,7 +89,7 @@ export const getBalance = async (
     });
   } catch (error) {
     console.error("Error obteniendo balance:", error);
-    res.status(500).json({ error: "Error al obtener balance" });
+    res.status(500).json(createErrorResponse('BALANCE_ERROR', "Error al obtener balance"));
   }
 };
 
@@ -101,14 +102,12 @@ export const updateBalance = async (
     const userId = req.user?.id as string;
 
     if (!["deposit", "withdraw"].includes(operation)) {
-      res
-        .status(400)
-        .json({ error: 'Operación inválida. Debe ser "deposit" o "withdraw"' });
+      res.status(400).json(createErrorResponse('INVALID_OPERATION', 'Operación inválida. Debe ser "deposit" o "withdraw"'));
       return;
     }
 
     if (amount <= 0) {
-      res.status(400).json({ error: "La cantidad debe ser mayor que cero" });
+      res.status(400).json(createErrorResponse('INVALID_AMOUNT', "La cantidad debe ser mayor que cero"));
       return;
     }
 
@@ -116,7 +115,7 @@ export const updateBalance = async (
       const wallet = await prisma.wallet.findUnique({ where: { userId } });
 
       if (!wallet) {
-        res.status(404).json({ error: "Wallet no encontrada" });
+        res.status(404).json(createErrorResponse('WALLET_NOT_FOUND', "Wallet no encontrada"));
         return;
       }
 
@@ -152,12 +151,13 @@ export const updateBalance = async (
           transactionError instanceof Error
             ? transactionError.message
             : "Error en la transacción";
+        const code = message === "Fondos insuficientes" ? 'INSUFFICIENT_FUNDS' : 'WITHDRAW_ERROR';
         const status = message === "Fondos insuficientes" ? 400 : 500;
-        res.status(status).json({ error: message });
+        res.status(status).json(createErrorResponse(code, message));
       }
     }
   } catch (error) {
     console.error("Error actualizando balance:", error);
-    res.status(500).json({ error: "Error al actualizar balance" });
+    res.status(500).json(createErrorResponse('BALANCE_UPDATE_ERROR', "Error al actualizar balance"));
   }
 };

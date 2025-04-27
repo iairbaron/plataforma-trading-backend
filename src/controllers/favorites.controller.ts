@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { createErrorResponse } from '../utils/errorResponse';
 
 export const addFavorite = async (req: Request, res: Response) => {
   try {
@@ -19,10 +20,7 @@ export const addFavorite = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error adding favorite:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error adding favorite'
-    });
+    res.status(500).json(createErrorResponse('FAVORITE_ADD_ERROR', 'Error adding favorite'));
   }
 };
 
@@ -44,10 +42,7 @@ export const removeFavorite = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error removing favorite:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error removing favorite'
-    });
+    res.status(500).json(createErrorResponse('FAVORITE_REMOVE_ERROR', 'Error removing favorite'));
   }
 };
 
@@ -67,9 +62,6 @@ export const getFavorites = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching favorites:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error fetching favorites'
-    });
+    res.status(500).json(createErrorResponse('FAVORITE_FETCH_ERROR', 'Error fetching favorites'));
   }
 }; 

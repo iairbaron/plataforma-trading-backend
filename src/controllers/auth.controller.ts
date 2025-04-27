@@ -3,13 +3,7 @@ import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { findUserByEmail } from '../services/user.service';
-
-// Helper function for error responses
-const createErrorResponse = (code: string, message: string, field?: string) => ({
-  status: 'error',
-  code,
-  errors: field ? [{ field, message }] : [{ message }]
-});
+import { createErrorResponse } from '../utils/errorResponse';
 
 export const signup = async (req: Request, res: Response) => {
   try {

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { findUserById } from "../services/user.service";
+import { createErrorResponse } from '../utils/errorResponse';
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
@@ -29,14 +30,14 @@ export const authMiddleware = (
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      res.status(401).json({ error: "No token provided" });
+      res.status(401).json(createErrorResponse('AUTH_TOKEN_MISSING', 'No token provided'));
       return;
     }
 
     const token = authHeader.split(" ")[1]; // Bearer <token>
 
     if (!token) {
-      res.status(401).json({ error: "Invalid token format" });
+      res.status(401).json(createErrorResponse('AUTH_TOKEN_INVALID_FORMAT', 'Invalid token format'));
       return;
     }
 
@@ -46,7 +47,7 @@ export const authMiddleware = (
       findUserById(decoded.id)
         .then((user) => {
           if (!user) {
-            res.status(401).json({ error: "User not found" });
+            res.status(401).json(createErrorResponse('AUTH_USER_NOT_FOUND', 'User not found'));
             return;
           }
           // Agregar el usuario al objeto request
@@ -55,13 +56,13 @@ export const authMiddleware = (
         })
         .catch((error) => {
           console.error("Database error:", error);
-          res.status(500).json({ error: "Internal server error" });
+          res.status(500).json(createErrorResponse('AUTH_DATABASE_ERROR', 'Internal server error'));
         });
     } catch (error) {
-      res.status(401).json({ error: "Invalid token" });
+      res.status(401).json(createErrorResponse('AUTH_TOKEN_INVALID', 'Invalid token'));
     }
   } catch (error) {
     console.error("Auth middleware error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json(createErrorResponse('AUTH_INTERNAL_ERROR', 'Internal server error'));
   }
 };
