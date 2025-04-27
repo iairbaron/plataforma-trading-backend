@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { depositFunds, getBalance } from '../controllers/wallet.controller';
+import {  getBalance, updateBalance } from '../controllers/wallet.controller';
 
 const router = Router();
 
-// Deposit funds into the user's wallet
-router.post('/deposit', authMiddleware, depositFunds);
+// Unified endpoint for deposit and withdraw operations
+router.post('/balance', authMiddleware, updateBalance);
 
 // Get user's balance
 router.get('/balance', authMiddleware, getBalance);
+
 
 export default router; 

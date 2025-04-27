@@ -18,6 +18,7 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
 ### Autenticación
 
 #### Login
+
 - **URL:** `/trading/auth/login`
 - **Método:** `POST`
 - **Body:**
@@ -47,9 +48,10 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
 ### Instrumentos (Criptomonedas)
 
 #### Obtener Lista de Instrumentos
+
 - **URL:** `/api/market/instruments`
 - **Método:** `GET`
-- **Headers:** 
+- **Headers:**
   ```
   Authorization: Bearer <token_jwt>
   ```
@@ -75,6 +77,7 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
 ### Favoritos
 
 #### Agregar Favorito
+
 - **URL:** `/api/favorites`
 - **Método:** `POST`
 - **Headers:**
@@ -102,6 +105,7 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
   ```
 
 #### Obtener Favoritos
+
 - **URL:** `/api/favorites`
 - **Método:** `GET`
 - **Headers:**
@@ -124,6 +128,7 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
   ```
 
 #### Eliminar Favorito
+
 - **URL:** `/api/favorites/:symbol`
 - **Método:** `DELETE`
 - **Headers:**
@@ -141,6 +146,7 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
 ## Órdenes
 
 ### Crear Orden de Mercado (Comprar/Vender)
+
 - **URL:** `/api/orders`
 - **Método:** `POST`
 - **Headers:**
@@ -188,34 +194,10 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
   }
   ```
 
-### Obtener Órdenes
-- **URL:** `/api/orders`
-- **Método:** `GET`
-- **Headers:**
-  ```
-  Authorization: Bearer <token_jwt>
-  ```
-- **Respuesta Exitosa:**
-  ```json
-  {
-    "status": "success",
-    "data": [
-      {
-        "id": "order_id",
-        "userId": "user_id",
-        "symbol": "eth",
-        "type": "buy",
-        "amount": 0.5,
-        "priceAtExecution": 1806.21,
-        "createdAt": "2025-04-26T19:00:29.975Z"
-      }
-    ]
-  }
-  ```
 
-## Wallet
 
 ### Obtener Balance
+
 - **URL:** `/api/wallet/balance`
 - **Método:** `GET`
 - **Headers:**
@@ -240,6 +222,41 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
   }
   ```
 
+### Actualizar Balance (Depositar/Retirar)
+
+- **URL:** `/api/wallet/balance`
+- **Método:** `POST`
+- **Headers:**
+  ```
+  Authorization: Bearer <token_jwt>
+  Content-Type: application/json
+  ```
+- **Body:**
+  ```json
+  {
+    "operation": "deposit", // o "withdraw" para retirar
+    "amount": 500
+  }
+  ```
+- **Respuesta Exitosa:**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "id": "wallet_id",
+      "userId": "user_id",
+      "balance": 1500.0,
+      "updatedAt": "2025-04-26T19:00:29.975Z"
+    }
+  }
+  ```
+- **Respuesta Error (Fondos Insuficientes):**
+  ```json
+  {
+    "error": "Fondos insuficientes"
+  }
+  ```
+
 ## Ejecución
 
 Para iniciar el servidor:
@@ -253,6 +270,7 @@ npm run dev
 ```
 
 ## Notas
+
 - Todos los endpoints (excepto login) requieren autenticación mediante token JWT
 - El token JWT debe enviarse en el header `Authorization` como `Bearer <token>`
 - Los precios de las criptomonedas se actualizan cada 5 minutos

@@ -18,8 +18,9 @@ const app = express();
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL || "https://your-frontend-domain.vercel.app"
-      : ["http://localhost:5173", "http://localhost:5174"],
+      ? process.env.FRONTEND_URL
+      : "http://localhost:5173",
+  //permite el envío de cookies o tokens en peticiones cross-site.
   credentials: true,
 };
 
