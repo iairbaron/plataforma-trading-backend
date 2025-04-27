@@ -13,6 +13,8 @@ export const validateMarketOrder = async (
   try {
     const { symbol, amount, type } = req.body;
 
+    console.log("Validating market order:", req.body);
+
     // Validaciones básicas
     if (!symbol || !amount || !type) {
       res.status(400).json(createErrorResponse('ORDER_VALIDATION_MISSING_FIELDS', 'Faltan datos obligatorios'));

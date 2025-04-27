@@ -1,12 +1,12 @@
-import prisma from '../prisma';
+import prisma from "../prisma";
 import { Request, Response } from "express";
-import { createErrorResponse } from '../utils/errorResponse';
+import { createErrorResponse } from "../utils/errorResponse";
 
 function formatNumber(num: number, decimals = 8) {
-  return Number(num).toLocaleString('en-US', {
+  return Number(num).toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
-    useGrouping: false
+    useGrouping: false,
   });
 }
 
@@ -18,13 +18,31 @@ export const createMarketOrder = async (
     const { symbol, amount, type, priceAtExecution, total } = req.body;
     const userId = req.user?.id;
 
+    // Verificar existencia de wallet antes de la transacción
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId: userId as string },
+    });
+    if (!wallet) {
+      res
+        .status(404)
+        .json(createErrorResponse("WALLET_NOT_FOUND", "Wallet no encontrada"));
+      return;
+    }
+
+    // Log para depuración de fondos
+    console.log('Balance:', wallet.balance, 'Total:', total, 'Amount:', amount, 'Price:', priceAtExecution);
+
+    // Validar fondos insuficientes antes de la transacción para compras
+    if (type === "buy" && wallet.balance < total) {
+      res
+        .status(400)
+        .json(
+          createErrorResponse("INSUFFICIENT_FUNDS", "Fondos insuficientes")
+        );
+      return;
+    }
+
     const order = await prisma.$transaction(async (tx) => {
-      const wallet = await tx.wallet.findUnique({
-        where: { userId: userId as string },
-      });
-
-      if (!wallet) throw new Error("WALLET_NOT_FOUND");
-
       if (type === "buy") {
         await tx.wallet.update({
           where: { userId: userId as string },
@@ -56,23 +74,20 @@ export const createMarketOrder = async (
       priceAtExecution: formatNumber(order.priceAtExecution),
     };
 
+    console.log("Formatted order:", formattedOrder);
+
     res.status(201).json({ status: "success", data: formattedOrder });
   } catch (error: unknown) {
     console.error("Error creando orden:", error);
-    let code = "ORDER_ERROR";
-    let message = "Error desconocido";
-    if (error instanceof Error) {
-      if (error.message === "WALLET_NOT_FOUND") {
-        code = "WALLET_NOT_FOUND";
-        message = "Wallet no encontrada";
-      } else if (error.message === "Fondos insuficientes") {
-        code = "INSUFFICIENT_FUNDS";
-        message = "Fondos insuficientes";
-      } else {
-        message = error.message;
-      }
-    }
-    res.status(400).json(createErrorResponse(code, message));
+    console.error("Error fetching orders:", error);
+    res
+      .status(400)
+      .json(
+        createErrorResponse(
+          "ORDER_FETCH_ERROR",
+          error instanceof Error ? error.message : "Error desconocido"
+        )
+      );
   }
 };
 
@@ -83,7 +98,7 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
-    const formattedOrders = orders.map(order => ({
+    const formattedOrders = orders.map((order) => ({
       ...order,
       amount: formatNumber(order.amount),
       priceAtExecution: formatNumber(order.priceAtExecution),
@@ -91,6 +106,13 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
     res.json({ status: "success", data: formattedOrders });
   } catch (error: unknown) {
     console.error("Error fetching orders:", error);
-    res.status(400).json(createErrorResponse("ORDER_FETCH_ERROR", error instanceof Error ? error.message : "Error desconocido"));
+    res
+      .status(400)
+      .json(
+        createErrorResponse(
+          "ORDER_FETCH_ERROR",
+          error instanceof Error ? error.message : "Error desconocido"
+        )
+      );
   }
 };
