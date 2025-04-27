@@ -4,7 +4,7 @@ import prisma from '../prisma';
 export const addFavorite = async (req: Request, res: Response) => {
   try {
     const { symbol } = req.body;
-    const userId = req.user?.id; // from auth middleware
+    const userId = req.user?.id; 
 
     const favorite = await prisma.favorite.create({
       data: {
