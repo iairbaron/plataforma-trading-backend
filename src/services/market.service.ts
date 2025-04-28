@@ -45,7 +45,7 @@ export async function fetchCoinData() {
         change24h: coin.price_change_percentage_24h_in_currency,
         change7d: coin.price_change_percentage_7d_in_currency,
       }));
-
+      
       return results;
     }
   } catch (error) {

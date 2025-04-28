@@ -22,9 +22,6 @@ export const createMarketOrder = async (
       return;
     }
 
-    // Log para depuración de fondos
-    console.log('Balance:', wallet.balance, 'Total:', total, 'Amount:', amount, 'Price:', priceAtExecution);
-
     // Validar fondos insuficientes antes de la transacción para compras
     if (type === "buy" && wallet.balance < total) {
       res
@@ -66,8 +63,6 @@ export const createMarketOrder = async (
       amount: formatNumber(order.amount),
       priceAtExecution: formatNumber(order.priceAtExecution),
     };
-
-    console.log("Formatted order:", formattedOrder);
 
     res.status(201).json({ status: "success", data: formattedOrder });
   } catch (error: unknown) {
