@@ -1,18 +1,27 @@
 import request from 'supertest';
 import app from '../index';
 
-describe('Favorites Routes', () => {
-  const token = 'Bearer testtoken'; // Ajusta según tu auth real
+let token: string;
 
+beforeAll(async () => {
+  const res = await request(app)
+    .post('/trading/auth/signup')
+    .send({
+      name: 'Test User',
+      email: 'testfav@test.com',
+      password: 'Test123'
+    });
+  token = 'Bearer ' + res.body.data.token;
+});
+
+describe('Favorites Routes', () => {
   it('debería obtener la lista de favoritos (GET /api/favorites)', async () => {
     const response = await request(app)
       .get('/api/favorites')
       .set('Authorization', token);
-    expect([200, 401]).toContain(response.status); // 401 si el token es inválido
-    if (response.status === 200) {
-      expect(response.body).toHaveProperty('status', 'success');
-      expect(Array.isArray(response.body.data)).toBe(true);
-    }
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('status', 'success');
+    expect(Array.isArray(response.body.data)).toBe(true);
   });
 
   it('debería agregar un favorito (POST /api/favorites)', async () => {
@@ -20,13 +29,13 @@ describe('Favorites Routes', () => {
       .post('/api/favorites')
       .set('Authorization', token)
       .send({ symbol: 'btc' });
-    expect([200, 201, 400, 401]).toContain(response.status); // Puede variar según lógica y token
+    expect([200, 201]).toContain(response.status);
   });
 
   it('debería eliminar un favorito (DELETE /api/favorites/:symbol)', async () => {
     const response = await request(app)
       .delete('/api/favorites/btc')
       .set('Authorization', token);
-    expect([200, 400, 401, 404]).toContain(response.status); // Puede variar según lógica y token
+    expect([200, 204]).toContain(response.status);
   });
 }); 
