@@ -25,7 +25,7 @@ COINGECKO_API_KEY="tu_api_key_coingecko"
   ```json
   {
     "email": "usuario@ejemplo.com",
-    "password": "contraseña123"
+    "password": "Contraseña123"
   }
   ```
 - **Respuesta Exitosa:**

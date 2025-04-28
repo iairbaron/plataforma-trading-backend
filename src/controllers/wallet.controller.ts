@@ -53,31 +53,36 @@ export const getBalance = async (
       return;
     }
 
-    // Obtener órdenes de compra
+    // Obtener todas las órdenes del usuario (compras y ventas)
     const orders = await prisma.order.findMany({
-      where: { userId, type: "buy" },
+      where: { userId },
     });
 
-    // Calcular valor total de monedas compradas
+    // Calcular valor total de monedas (compras - ventas)
     const coins = Coin.getCoins();
     const coinDetails: Record<
       string,
       { amount: string; value: string; currentPrice: string }
-    > = orders.reduce((acc, order) => {
+    > = {};
+    orders.forEach(order => {
       const coin = coins.find(
         (c) => c.symbol.toLowerCase() === order.symbol.toLowerCase()
       );
       if (coin) {
         const value = order.amount * coin.price;
-        if (!acc[order.symbol]) {
-          acc[order.symbol] = { amount: formatNumber(0, 8), value: formatNumber(0, 2), currentPrice: formatNumber(coin.price, 2) };
+        if (!coinDetails[order.symbol]) {
+          coinDetails[order.symbol] = { amount: formatNumber(0, 8), value: formatNumber(0, 2), currentPrice: formatNumber(coin.price, 2) };
         }
-        acc[order.symbol].amount = formatNumber(parseFloat(acc[order.symbol].amount) + order.amount, 8);
-        acc[order.symbol].value = formatNumber(parseFloat(acc[order.symbol].value) + value, 2);
-        acc[order.symbol].currentPrice = formatNumber(coin.price, 2);
+        if (order.type === 'buy') {
+          coinDetails[order.symbol].amount = formatNumber(parseFloat(coinDetails[order.symbol].amount) + order.amount, 8);
+          coinDetails[order.symbol].value = formatNumber(parseFloat(coinDetails[order.symbol].value) + value, 2);
+        } else if (order.type === 'sell') {
+          coinDetails[order.symbol].amount = formatNumber(parseFloat(coinDetails[order.symbol].amount) - order.amount, 8);
+          coinDetails[order.symbol].value = formatNumber(parseFloat(coinDetails[order.symbol].value) - value, 2);
+        }
+        coinDetails[order.symbol].currentPrice = formatNumber(coin.price, 2);
       }
-      return acc;
-    }, {} as Record<string, { amount: string; value: string; currentPrice: string }>);
+    });
 
     const totalCoinValue = Object.values(coinDetails).reduce(
       (sum, coin) => sum + parseFloat(coin.value),
