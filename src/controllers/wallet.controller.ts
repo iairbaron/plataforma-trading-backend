@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import prisma from '../prisma';
 import Coin from "../sdk/coin";
 import { createErrorResponse } from '../utils/errorResponse';
-import { validarAmount, getWalletOrError } from '../utils/walletHelpers';
+import { validateAmount, getWalletOrError } from '../utils/walletHelpers';
 import { formatNumber } from '../utils/numberFormat';
 
 // Helper para actualizar el balance
@@ -21,7 +21,7 @@ export const depositFunds = async (
     const { amount } = req.body;
     const userId = req.user?.id as string;
 
-    if (!validarAmount(amount, res)) return;
+    if (!validateAmount(amount, res)) return;
 
     const wallet = await getWalletOrError(userId, res);
     if (!wallet) return;
@@ -111,7 +111,7 @@ export const updateBalance = async (
       return;
     }
 
-    if (!validarAmount(amount, res)) return;
+    if (!validateAmount(amount, res)) return;
 
     if (operation === "deposit") {
       const wallet = await getWalletOrError(userId, res);

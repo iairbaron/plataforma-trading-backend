@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { createErrorResponse } from './errorResponse';
 
 // Valida que el monto sea mayor a cero
-export function validarAmount(amount: number, res?: Response): boolean {
+export function validateAmount(amount: number, res?: Response): boolean {
   if (amount <= 0) {
     if (res) {
       res.status(400).json(createErrorResponse('INVALID_AMOUNT', "La cantidad debe ser mayor que cero"));

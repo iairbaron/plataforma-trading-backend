@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import Coin from "../sdk/coin";
 import { PrismaClient } from "@prisma/client";
 import { createErrorResponse } from '../utils/errorResponse';
-import { validarAmount, getWalletOrError, hasFunds, hasAssets } from '../utils/walletHelpers';
+import { validateAmount, getWalletOrError, hasFunds, hasAssets } from '../utils/walletHelpers';
 
 export const validateMarketOrder = async (
   req: Request,
@@ -20,7 +20,7 @@ export const validateMarketOrder = async (
       return;
     }
 
-    if (typeof symbol !== "string" || typeof amount !== "number" || !validarAmount(amount, res)) {
+    if (typeof symbol !== "string" || typeof amount !== "number" || !validateAmount(amount, res)) {
       // validarAmount ya responde si amount <= 0
       return;
     }
